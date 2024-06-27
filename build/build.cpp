@@ -110,12 +110,14 @@ bool load_build_data() {
 
     auto src = Handler.getKeys("cpp_source");
     for (auto it = src.begin(); it != src.end(); it++) {
-        cpp_source.push_back(it->first);
+        if (std::stoi(it->second))
+            cpp_source.push_back(it->first);
     }
 
     auto flags = Handler.getKeys("compilation_flags");
     for (auto it = flags.begin(); it != flags.end(); it++) {
-        compilation_flags.push_back(it->first);
+        if (std::stoi(it->second))
+            compilation_flags.push_back(it->first);
     }
     return true;
 }
@@ -123,7 +125,7 @@ bool load_build_data() {
 int main(int argc, char** argv) {
     system("");
     if (!load_build_data()) {
-        std::cout << "\033[31;1m Building settings problem \033[0m" << std::endl;
+        std::cout << "\033[31;1m Cannot read ini-file \033[0m" << std::endl;
         return 1;
     }
 
@@ -133,7 +135,7 @@ int main(int argc, char** argv) {
         args.push_back( std::string( argv[count] ) );
         count++;
     }
-    bool result;
+    bool result = true;
     auto start = std::chrono::steady_clock::now();
     if (count > 1) {
         if (in_vector("--help", args)) {
@@ -141,21 +143,27 @@ int main(int argc, char** argv) {
             return 0;
         }
 
-        if (in_vector("-b", args) || in_vector("--build", args)) {
-            result = build();
+        if (in_vector("-d", args) || in_vector("--delete", args)) {
+            if (!cmd_exec("rm " + outdir)) {
+                std::cout << "\033[31m Deletion has failed \033[0m" << std::endl;
+                return 1;
+            };
         }
-        else if (in_vector("-fb", args) || in_vector("--force_build", args)) {
+
+        if (in_vector("-fb", args) || in_vector("-bf", args) || in_vector("--force_build", args)) {
             result = build(true);
+        }
+        else if (in_vector("-fr", args) || in_vector("-rf", args) || in_vector("--force_recompile", args)) {
+            result = recompile(true);
+        }
+        else if (in_vector("-b", args) || in_vector("--build", args)) {
+            result = build();
         }
         else if (in_vector("-r", args) || in_vector("--recompile", args)) {
             result = recompile();
         }
-        else if (in_vector("-fr", args) || in_vector("--force_recompile", args)) {
-            result = recompile(true);
-        }
-        
     } else {
-        result = build();
+        print_info_about();
     }
     auto end = std::chrono::steady_clock::now();
     
