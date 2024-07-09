@@ -6,7 +6,7 @@ int main(int argc, char **argv)
     glutInit(&argc, argv);//начальная инициализация окна
     glutInitDisplayMode(GLUT_DOUBLE);//установка режима отображения
     glutInitWindowSize(WINX,WINY);//размер окна
-    glutInitWindowPosition(200, 200);//начальная позиция на экране
+    glutInitWindowPosition(450, 100);//начальная позиция на экране
     //вы заметили что вначале идут функции с приставкой glutInit...?, так вот они должны быть первыми, а потом уже все остальные ф-ии.
     glutCreateWindow("Window");//заголовок окна
     glClearColor(1, 0.5, 1, 0);//цвет фона
@@ -21,5 +21,7 @@ int main(int argc, char **argv)
 
     prepare();
     glutMainLoop();//запускаем всё проинициализированное, проще говоря та же ф-я main, только в данном случае glut'овская ф-я main.
+    end();
+    
     return 0;
 }

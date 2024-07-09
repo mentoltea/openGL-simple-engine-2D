@@ -9,6 +9,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <vector>
+#include <chrono>
 
 // STRUCTURES
 class DrawableObject {
@@ -57,6 +58,8 @@ extern void call();
 void update();
 // prepares the game (needs to be provided)
 extern void prepare();
+// called on the end of the programm
+extern void end();
 
 
 // DRAWING FUNCTIONS
@@ -66,8 +69,14 @@ void draw_line(Point start, Point end, Color color = {0,0,0}, int width=3);
 
 void draw_circle(Point center, int radius, Color color = {0,0,0}, int width=3, int shapeness=180);
 
+void draw_filled_circle(Point center, int radius, Color color = {0,0,0}, int shapeness=180);
+
 void draw_rect(Point leftbottom,  int width, int height, Color color = {0,0,0}, int linewidth=3);
 
+void draw_filled_rect(Point leftbottom,  int width, int height, Color color = {0,0,0});
+
 void draw_poly(std::vector<Point> points, Color color = {0,0,0}, int linewidth=3);
+
+void draw_filled_poly(std::vector<Point> points, Color color = {0,0,0});
 
 #endif

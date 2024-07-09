@@ -6,6 +6,27 @@
 #include <filesystem>
 #include "IniFile.h"
 
+#include <time.h>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#ifndef WIN32
+#include <unistd.h>
+#endif
+
+#ifdef WIN32
+#define stat _stat
+#endif
+
+struct stat _lasttime;
+time_t lastUpdateTime(const std::string &filename) {
+    if(stat(filename.c_str(), &_lasttime)==0) {
+        return _lasttime.st_mtime;
+    }
+    return time(NULL);
+}
+
+
 std::vector<std::string> cpp_source, compilation_flags;
 std::string target, outdir, indir;
 IniFile Handler("build/build.ini");
@@ -65,7 +86,10 @@ bool recompile(bool force=false) {
     }
     std::cout << "Compilation:" << std::endl;
     for (auto it = cpp_source.begin(); it != cpp_source.end(); it++) {
-        if (file_exists(outdir + *it + ".o") && !force) continue;
+        //std::cout << *it + " " << lastUpdateTime(outdir + *it + ".o") << " " << lastUpdateTime(indir + *it + ".cpp") << std::endl;
+        if (file_exists(outdir + *it + ".o") 
+            && lastUpdateTime(outdir + *it + ".o") >= lastUpdateTime(indir + *it + ".cpp")
+            && !force) continue;
         auto start = std::chrono::steady_clock::now();
         if (!spec_recompile(*it)) return error("Cannot compile file " + *it + ".cpp");
         auto end = std::chrono::steady_clock::now();
@@ -98,8 +122,7 @@ bool build(bool force=false) {
 
 bool load_build_data() {
     if (!Handler.isSectionExist("settings") 
-    || !Handler.isSectionExist("cpp_source") 
-    || !Handler.isSectionExist("compilation_flags")) return error("Does not exist needed segment(s)");
+    || !Handler.isSectionExist("cpp_source")) return error("Does not exist needed segment(s)");
 
     if (!Handler.isKeysExist("settings", "target")) return error("No key \"target\" exists");
     target = Handler.readString("settings", "target");
@@ -114,11 +137,14 @@ bool load_build_data() {
             cpp_source.push_back(it->first);
     }
 
-    auto flags = Handler.getKeys("compilation_flags");
-    for (auto it = flags.begin(); it != flags.end(); it++) {
-        if (std::stoi(it->second))
-            compilation_flags.push_back(it->first);
+    if (Handler.isSectionExist("compilation_flags")) {
+        auto flags = Handler.getKeys("compilation_flags");
+        for (auto it = flags.begin(); it != flags.end(); it++) {
+            if (std::stoi(it->second))
+                compilation_flags.push_back(it->first);
+        }
     }
+
     return true;
 }
 
@@ -163,7 +189,8 @@ int main(int argc, char** argv) {
             result = recompile();
         }
     } else {
-        print_info_about();
+        result = build();
+        //print_info_about();
     }
     auto end = std::chrono::steady_clock::now();
     
